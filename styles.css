@@ -370,6 +370,42 @@ body.prestart #introSkipBtn{
 	cursor:not-allowed;
 }
 
+.howToCard{
+	margin: 10px 0 12px;
+	padding: 12px;
+	border:1px solid var(--stroke);
+	border-radius:14px;
+	background: rgba(255,255,255,.72);
+}
+
+.howToCard.hidden{
+	display:none;
+}
+
+.howToTitle{
+	margin:0;
+	font-size:13px;
+	font-weight:800;
+}
+
+.howToCopy{
+	margin:6px 0 0;
+	font-size:12px;
+	line-height:1.45;
+}
+
+.howToList{
+	margin:8px 0 0;
+	padding-left:18px;
+	font-size:12px;
+	line-height:1.5;
+	color: var(--text);
+}
+
+.howToList li + li{
+	margin-top:4px;
+}
+
 /* Screens with fade */
 .screen{ display:none; opacity:0; transform: translateY(6px); }
 .screen.active{ display:block; animation: fadeIn .18s ease-out forwards; }

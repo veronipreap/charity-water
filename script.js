@@ -32,6 +32,8 @@ const curseStatus = document.getElementById("curseStatus");
 const introCallout = document.getElementById("introCallout");
 const mapChapters = document.getElementById("mapChapters");
 const mapHint = document.getElementById("mapHint");
+const howToBtn = document.getElementById("howToBtn");
+const howToCard = document.getElementById("howToCard");
 
 let confettiLayer = null;
 let introStartRevealTimer = null;
@@ -258,6 +260,10 @@ function show(id) {
   document.getElementById(id).classList.add("active");
   titleEl.textContent = id[0].toUpperCase() + id.slice(1);
   setMoodForScreen(id);
+
+  if (howToCard && id !== "home") {
+    howToCard.classList.add("hidden");
+  }
 
   navBtns.forEach((btn) => btn.classList.remove("active"));
   const activeBtn = document.querySelector(`.nav button[data-go="${id}"]`);
@@ -646,6 +652,20 @@ function pushBackCurse() {
     : "Mood: resisting the drought witch ⚔️";
 }
 
+function openHowToPlay() {
+  show("home");
+  if (!howToCard) return;
+
+  const isHidden = howToCard.classList.contains("hidden");
+  if (!isHidden) {
+    howToCard.classList.add("hidden");
+    return;
+  }
+
+  howToCard.classList.remove("hidden");
+  howToCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
 function bindIfExists(element, eventName, handler) {
   if (!element) return;
   element.addEventListener(eventName, handler);
@@ -653,6 +673,7 @@ function bindIfExists(element, eventName, handler) {
 
 navBtns.forEach((btn) => bindIfExists(btn, "click", () => show(btn.dataset.go)));
 bindIfExists(document.getElementById("startBtn"), "click", () => show("map"));
+bindIfExists(howToBtn, "click", openHowToPlay);
 bindIfExists(introStartBtn, "click", completeIntroAndStartChapter1);
 bindIfExists(introScene, "click", completeIntroAndStartChapter1);
 bindIfExists(introScene, "keydown", handleIntroSceneStartKeydown);

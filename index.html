@@ -65,13 +65,25 @@
 
         <!-- HOME -->
         <div class="screen" id="home">
-          <p style="margin:0; font-weight:800; font-size:18px;">Solve words! Build impact! Get closer!</p>
+          <p style="margin:0; font-weight:800; font-size:18px;">Break the curse! Restore the wells! Save the land!</p>
           <p class="muted" style="margin:8px 0 0; line-height:1.5;">
-            Each solved word unlocks a story moment and adds funds toward your reunion!
+            Grey needs your help to defeat the drought witch. Each solved word powers clean water projects and pushes the curse back!
           </p>
           <div class="btnRow">
             <button class="btn primary" id="startBtn" type="button">Start Journey</button>
-            <button class="btn" type="button" onclick="show('map')">How to Play</button>
+            <button class="btn" id="howToBtn" type="button">How to Play</button>
+          </div>
+          <div class="howToCard hidden" id="howToCard" aria-live="polite">
+            <p class="howToTitle">How to Play</p>
+            <p class="muted howToCopy">Help Grey stop the drought witch by solving each hidden word before mistakes run out.</p>
+            <ol class="howToList">
+              <li>Open the current chapter from the map and start the level.</li>
+              <li>Tap letters on the keyboard to reveal the hidden word.</li>
+              <li>Wrong letters increase mistakes and lower water level.</li>
+              <li>Use hints when stuck (except final chapter, where hints are disabled).</li>
+              <li>Solve all words in a chapter to unlock the next chapter.</li>
+              <li>Keep going until the final chapter to complete the mission.</li>
+            </ol>
           </div>
           <p class="muted" style="margin-top:12px; font-size:11px;">
             Inspired by charity: water’s mission of clean water access for all!
