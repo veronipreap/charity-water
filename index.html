@@ -30,13 +30,32 @@
       </div>
 
       <div class="hd">
-        <b id="screenTitle">Home</b>
+        <b id="screenTitle">Intro</b>
         <span class="muted" style="font-size:12px;">Prototype</span>
       </div>
 
       <div class="bd">
+        <!-- INTRO -->
+        <div class="screen active" id="intro">
+          <p style="margin:0; font-weight:900; font-size:18px;">Chapter 1 - The Decision</p>
+          <p class="muted" style="margin:8px 0 0; line-height:1.5;">
+            Grey has one shot to reunite with loved ones. The journey starts with hope, community, and your help.
+          </p>
+
+          <img class="introArt" src="imgs/intro 3.png" alt="Chapter 1 introduction art" />
+
+          <p class="muted" style="margin:8px 0 0; line-height:1.5;">
+            Raise enough support for clean water projects, and every solved word moves the story forward.
+          </p>
+
+          <div class="btnRow">
+            <button class="btn primary" id="introStartBtn" type="button">Start Chapter 1</button>
+            <button class="btn" id="introSkipBtn" type="button">Go to Map</button>
+          </div>
+        </div>
+
         <!-- HOME -->
-        <div class="screen active" id="home">
+        <div class="screen" id="home">
           <p style="margin:0; font-weight:800; font-size:18px;">Solve words. Build impact. Get closer.</p>
           <p class="muted" style="margin:8px 0 0; line-height:1.5;">
             Each solved word unlocks a story moment and adds funds toward your reunion.
@@ -53,25 +72,8 @@
         <!-- MAP -->
         <div class="screen" id="map">
           <p style="margin:0; font-weight:800;">Journey Map</p>
-          <p class="muted" style="margin:6px 0 10px; font-size:12px;">Pick a chapter to continue.</p>
-
-          <div class="card" style="box-shadow:none; margin-bottom:10px;">
-            <div class="bd">
-              <div style="display:flex; justify-content:space-between; gap:10px;">
-                <div><b>Chapter 1</b><div class="muted" style="font-size:12px;">The Decision</div></div>
-                <div class="chip">Done ✓</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" style="box-shadow:none;">
-            <div class="bd">
-              <div style="display:flex; justify-content:space-between; gap:10px;">
-                <div><b>Chapter 2</b><div class="muted" style="font-size:12px;">Fundraising</div></div>
-                <button class="chip" style="cursor:pointer" onclick="show('game')">Play ▶</button>
-              </div>
-            </div>
-          </div>
+          <p class="muted" id="mapHint" style="margin:6px 0 10px; font-size:12px;">Complete chapters in order to unlock the next one.</p>
+          <div id="mapChapters"></div>
         </div>
 
         <!-- GAME -->
