@@ -179,7 +179,33 @@ body{
 	user-select:none;
 	cursor:pointer;
 }
+.kbd button.key{
+	appearance:none;
+	-webkit-appearance:none;
+	font-family:inherit;
+	color:inherit;
+}
 .key.dim{opacity:.45; cursor:not-allowed}
+.key.used{opacity:.88}
+.key.good{
+	background: rgba(71,199,107,.18);
+	border-color: rgba(71,199,107,.42);
+	font-weight:700;
+}
+.key.bad{
+	background: rgba(255,107,122,.18);
+	border-color: rgba(255,107,122,.45);
+	font-weight:700;
+}
+.key:disabled{
+	opacity:.55;
+	cursor:not-allowed;
+}
+
+.btn:disabled{
+	opacity:.55;
+	cursor:not-allowed;
+}
 
 /* Screens with fade */
 .screen{ display:none; opacity:0; transform: translateY(6px); }

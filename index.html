@@ -31,7 +31,7 @@
 
       <div class="hd">
         <b id="screenTitle">Home</b>
-        <span class="muted" style="font-size:12px;">Wireframe</span>
+        <span class="muted" style="font-size:12px;">Prototype</span>
       </div>
 
       <div class="bd">
@@ -76,41 +76,37 @@
 
         <!-- GAME -->
         <div class="screen" id="game">
-          <p style="margin:0; font-weight:800;">Chapter 2 — Word 2/4</p>
-          <p class="muted" style="margin:6px 0 0; font-size:12px;">Mistakes: 2/6 • Hint: 1</p>
+          <p id="gameTitle" style="margin:0; font-weight:800;">Chapter 2 — Word 1/4</p>
+          <p class="muted" id="gameStats" style="margin:6px 0 0; font-size:12px;">Mistakes: 0/6 • Hints left: 3</p>
 
           <div class="tank" aria-label="Water tank">
             <div class="water" id="waterLevel" style="height:62%"></div>
           </div>
 
-          <div class="word" aria-label="Hidden word">
-            <span>_</span><span>_</span><span>_</span><span>_</span><span>_</span><span>_</span>
+          <div class="word" id="wordSlots" aria-label="Hidden word">
+            <span>_</span>
           </div>
 
-          <p class="muted" style="margin:10px 0 0; font-size:12px;">Wrong letters: R, T</p>
+          <p class="muted" id="clueText" style="margin:10px 0 0; font-size:12px;">Clue: A six-letter word linked to clean water.</p>
+          <p class="muted" id="wrongLetters" style="margin:6px 0 0; font-size:12px;">Wrong letters: none</p>
 
-          <div class="kbd" aria-label="Keyboard wireframe">
-            <div class="key dim">A</div><div class="key" onclick="demoOops()">B</div><div class="key">C</div><div class="key">D</div><div class="key" onclick="demoWin()">E</div><div class="key">F</div><div class="key">G</div>
-            <div class="key">H</div><div class="key">I</div><div class="key">J</div><div class="key">K</div><div class="key">L</div><div class="key">M</div><div class="key">N</div>
-            <div class="key">O</div><div class="key dim">P</div><div class="key">Q</div><div class="key dim">R</div><div class="key dim">S</div><div class="key dim">T</div><div class="key">U</div>
-            <div class="key">V</div><div class="key">W</div><div class="key">X</div><div class="key">Y</div><div class="key">Z</div><div class="key" onclick="demoWin()">Hint</div><div class="key" onclick="show('map')">Quit</div>
-          </div>
+          <div class="kbd" id="keyGrid" aria-label="Keyboard"></div>
 
           <div class="btnRow">
-            <button class="btn primary" type="button" onclick="demoWin()">Mock “Solve Word”</button>
-            <button class="btn" type="button" onclick="demoOops()">Mock “Wrong Guess”</button>
+            <button class="btn" id="hintBtn" type="button">Use Hint</button>
+            <button class="btn" id="quitBtn" type="button">Quit to Map</button>
           </div>
         </div>
 
         <!-- STORY -->
         <div class="screen" id="story">
-          <p style="margin:0; font-weight:900; font-size:16px;">✅ Word solved!</p>
-          <p class="muted" style="margin:8px 0 0; line-height:1.5;">
+          <p id="storyTitle" style="margin:0; font-weight:900; font-size:16px;">✅ Word solved!</p>
+          <p class="muted" id="storyBody" style="margin:8px 0 0; line-height:1.5;">
             Your fundraiser post gets shared. Donations start coming in — you’re closer to the flight.
           </p>
           <div class="btnRow">
-            <button class="btn primary" type="button" onclick="show('game')">Next Word</button>
-            <button class="btn" type="button" onclick="show('map')">Back to Map</button>
+            <button class="btn primary" id="nextWordBtn" type="button">Next Word</button>
+            <button class="btn" id="storyMapBtn" type="button">Back to Map</button>
           </div>
         </div>
       </div>
@@ -124,184 +120,6 @@
     <button data-go="story">Story</button>
   </nav>
 
-  <script>
-    const screens = ["home","map","game","story"];
-    const titleEl = document.getElementById("screenTitle");
-    const navBtns = document.querySelectorAll(".nav button");
-    const moodText = document.getElementById("moodText");
-    const avatar = document.getElementById("avatar");
-    const progressBar = document.getElementById("progressBar");
-    const progressFill = document.getElementById("progressFill");
-    const fundsChip = document.getElementById("fundsChip");
-    const waterLevel = document.getElementById("waterLevel");
-    const mainCard = document.getElementById("mainCard");
-
-    // Demo state
-    let funds = 420;
-    const goal = 1200;
-    let tankPct = 62;
-
-    // --- Chibi Grey SVG “sprites” (neutral / win / lose) ---
-    function chibiGreySVG(state){
-      const eyes =
-        state === "win"
-          ? `<path d="M38 56c6 6 12 6 18 0" stroke="#203056" stroke-width="4" stroke-linecap="round"/>
-             <path d="M66 56c6 6 12 6 18 0" stroke="#203056" stroke-width="4" stroke-linecap="round"/>`
-          : state === "lose"
-          ? `<path d="M40 56c6-4 10-4 16 0" stroke="#203056" stroke-width="4" stroke-linecap="round"/>
-             <path d="M68 56c6-4 10-4 16 0" stroke="#203056" stroke-width="4" stroke-linecap="round"/>`
-          : `<circle cx="48" cy="56" r="4.5" fill="#2a3f7a"/><circle cx="76" cy="56" r="4.5" fill="#2a3f7a"/>
-             <circle cx="50" cy="54" r="1.6" fill="#fff"/><circle cx="78" cy="54" r="1.6" fill="#fff"/>`;
-
-      const mouth =
-        state === "win"
-          ? `<path d="M52 72c6 6 18 6 24 0" stroke="rgba(160,70,90,.8)" stroke-width="4" stroke-linecap="round"/>`
-          : state === "lose"
-          ? `<path d="M54 76c6-4 14-4 20 0" stroke="rgba(160,70,90,.75)" stroke-width="4" stroke-linecap="round"/>`
-          : `<path d="M56 72c5 4 11 4 16 0" stroke="rgba(160,70,90,.75)" stroke-width="4" stroke-linecap="round"/>`;
-
-      const cheeks =
-        state === "win"
-          ? `<ellipse cx="36" cy="70" rx="10" ry="6" fill="rgba(255,123,214,0.22)"/>
-             <ellipse cx="88" cy="70" rx="10" ry="6" fill="rgba(255,123,214,0.22)"/>`
-          : state === "lose"
-          ? `<ellipse cx="36" cy="70" rx="10" ry="6" fill="rgba(255,107,122,0.18)"/>
-             <ellipse cx="88" cy="70" rx="10" ry="6" fill="rgba(255,107,122,0.18)"/>`
-          : `<ellipse cx="36" cy="70" rx="10" ry="6" fill="rgba(255,123,214,0.14)"/>
-             <ellipse cx="88" cy="70" rx="10" ry="6" fill="rgba(255,123,214,0.14)"/>`;
-
-      const sparkle =
-        state === "win"
-          ? `<path d="M94 26l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="rgba(255,255,255,.75)"/>`
-          : "";
-
-      return `
-      <svg viewBox="0 0 120 120" aria-label="Chibi Grey">
-        <defs>
-          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="rgba(118,214,255,.9)"/>
-            <stop offset="1" stop-color="rgba(255,123,214,.8)"/>
-          </linearGradient>
-          <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#1b1c2c"/>
-            <stop offset="1" stop-color="#0d0f20"/>
-          </linearGradient>
-        </defs>
-
-        <rect width="120" height="120" rx="18" fill="rgba(0,0,0,.12)"/>
-        <circle cx="35" cy="26" r="44" fill="rgba(255,255,255,.08)"/>
-        <circle cx="95" cy="84" r="40" fill="rgba(255,255,255,.05)"/>
-
-        <!-- tiny gradient halo -->
-        <circle cx="60" cy="62" r="34" fill="url(#g)" opacity=".14"/>
-
-        <!-- head -->
-        <circle cx="60" cy="62" r="30" fill="#f7c5b2"/>
-
-        <!-- hair -->
-        <path d="M30 58c2-26 20-38 28-40 22-6 48 12 48 42-8-10-20-16-28-14-6 10-12 14-20 16-8-2-14-6-20-16-8-2-16 4-20 12z"
-              fill="url(#hair)"/>
-
-        <!-- eyes / mouth / cheeks -->
-        ${eyes}
-        ${cheeks}
-        ${mouth}
-
-        ${sparkle}
-
-        <!-- tiny drop pin -->
-        <path d="M24 96c0-10 9-18 9-18s9 8 9 18c0 6-4 11-9 11s-9-5-9-11z"
-              fill="rgba(118,214,255,.85)"/>
-        <circle cx="37" cy="91" r="2.2" fill="rgba(255,2con55,255,.7)"/>
-      </svg>`;
-    }
-
-    function setExpression(state){
-      avatar.innerHTML = `<img src="imgs/icon.png" alt="Grey" style="width:100%; height:100%; object-fit:cover; object-position:center 15%; border-radius:16px;">`;
-    }
-
-    function setMoodForScreen(screenId){
-      const moods = {
-        home:  "Mood: calm and confident 😌",
-        map:   "Mood: planning the route 🗺️",
-        game:  "Mood: focus mode 🎯",
-        story: "Mood: proud of you ✨"
-      };
-      moodText.textContent = moods[screenId] || "Mood: cheering you on ✨";
-    }
-
-    function show(id){
-      screens.forEach(s => document.getElementById(s).classList.remove("active"));
-      document.getElementById(id).classList.add("active");
-
-      titleEl.textContent = id[0].toUpperCase() + id.slice(1);
-      setMoodForScreen(id);
-
-      navBtns.forEach(b => b.classList.remove("active"));
-      const activeBtn = document.querySelector(`.nav button[data-go="${id}"]`);
-      if(activeBtn) activeBtn.classList.add("active");
-    }
-
-    // Bottom nav
-    navBtns.forEach(btn => btn.addEventListener("click", () => show(btn.dataset.go)));
-    document.getElementById("startBtn").addEventListener("click", () => show("map"));
-
-    function pulseWin(){
-      progressBar.classList.remove("pulseGlow");
-      avatar.classList.remove("pulseGlow");
-      void progressBar.offsetWidth;
-      progressBar.classList.add("pulseGlow");
-      avatar.classList.add("pulseGlow");
-    }
-
-    function shakeOops(){
-      mainCard.classList.remove("shake");
-      void mainCard.offsetWidth;
-      mainCard.classList.add("shake");
-    }
-
-    // Demo “win”
-    function demoWin(){
-      setExpression("win");
-      moodText.textContent = "Mood: proud of you ✨";
-
-      funds = Math.min(goal, funds + 80);
-      const pct = Math.round((funds / goal) * 100);
-      progressFill.style.width = Math.min(100, pct) + "%";
-      fundsChip.textContent = `$${funds} / $${goal}`;
-
-      tankPct = Math.min(90, tankPct + 6);
-      waterLevel.style.height = tankPct + "%";
-
-      pulseWin();
-      show("story");
-
-      // return to neutral after a moment
-      setTimeout(() => setExpression("neutral"), 1200);
-    }
-
-    // Demo “lose”
-    function demoOops(){
-      setExpression("lose");
-      moodText.textContent = "Mood: don’t panic… try again 😤";
-
-      tankPct = Math.max(10, tankPct - 10);
-      waterLevel.style.height = tankPct + "%";
-
-      shakeOops();
-
-      // return to neutral after a moment
-      setTimeout(() => setExpression("neutral"), 1200);
-    }
-
-    // Expose for onclick
-    window.show = show;
-    window.demoWin = demoWin;
-    window.demoOops = demoOops;
-
-    // Initial sprite
-    setExpression("neutral");
-    setMoodForScreen("home");
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
