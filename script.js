@@ -24,10 +24,19 @@ const nextWordBtn = document.getElementById("nextWordBtn");
 const storyMapBtn = document.getElementById("storyMapBtn");
 const introStartBtn = document.getElementById("introStartBtn");
 const introSkipBtn = document.getElementById("introSkipBtn");
+const introActions = document.getElementById("introActions");
+const introScene = document.getElementById("introSceneStart");
+const witchArt = document.querySelector(".witchArt");
+const fightCurseBtn = document.getElementById("fightCurseBtn");
+const curseStatus = document.getElementById("curseStatus");
+const introCallout = document.getElementById("introCallout");
 const mapChapters = document.getElementById("mapChapters");
 const mapHint = document.getElementById("mapHint");
 
 let confettiLayer = null;
+let introStartRevealTimer = null;
+let introTypeTimer = null;
+let introParallaxBound = false;
 
 const chapters = [
   {
@@ -91,10 +100,10 @@ const chapters = [
 ];
 
 const storyByChapter = {
-  1: "You chose courage over fear and took the first real step.",
-  2: "Your fundraiser gained traction and brought in meaningful support.",
-  3: "Your community stood beside you, proving no one walks alone.",
-  4: "Momentum carried your mission further than you thought possible."
+  1: "You chose courage over fear and took the first step toward clean water access!",
+  2: "Your fundraiser gained momentum, turning generosity into real water solutions!",
+  3: "Your community rallied together, helping more families move closer to safe water!",
+  4: "Momentum became impact, strengthening charity: water's mission to serve every person in need!"
 };
 
 const state = {
@@ -107,10 +116,14 @@ const state = {
   mistakes: 0,
   hintsLeft: 0,
   guessed: new Set(),
+  hasStarted: false,
   introSeen: false,
+  introCursePushes: 0,
   canPlay: false,
   storyMode: "map"
 };
+
+const introCalloutFullText = "Oh no, please help us save our land from the evil drought witch! Every solved word raises support for clean water and brings life back!";
 
 function getCurrentChapter() {
   return chapters[state.currentChapterIndex];
@@ -133,7 +146,7 @@ function setExpression(expression) {
 
 function setMoodForScreen(screenId) {
   const moods = {
-    intro: "Mood: hopeful and ready 🌤️",
+    intro: "Mood: determined to stop the drought witch ⚔️",
     home: "Mood: calm and confident 😌",
     map: "Mood: planning the route 🗺️",
     game: "Mood: locked in 🎯",
@@ -142,7 +155,100 @@ function setMoodForScreen(screenId) {
   moodText.textContent = moods[screenId] || "Mood: cheering you on ✨";
 }
 
+function resetIntroActions() {
+  if (!introActions) return;
+  introActions.classList.remove("reveal");
+  introActions.classList.add("hidden");
+}
+
+function stopIntroTypewriter() {
+  if (!introTypeTimer) return;
+  clearInterval(introTypeTimer);
+  introTypeTimer = null;
+}
+
+function runIntroTypewriter() {
+  if (!introCallout) return;
+  stopIntroTypewriter();
+  introCallout.textContent = "";
+
+  let index = 0;
+  introTypeTimer = setInterval(() => {
+    index += 1;
+    introCallout.textContent = introCalloutFullText.slice(0, index);
+    if (index >= introCalloutFullText.length) {
+      stopIntroTypewriter();
+    }
+  }, 18);
+}
+
+function updateIntroCurseUI() {
+  if (!introScene || !curseStatus || !fightCurseBtn) return;
+
+  introScene.classList.remove("curse-stage-1", "curse-stage-2", "curse-stage-3");
+
+  if (state.introCursePushes >= 3) {
+    introScene.classList.add("curse-stage-3");
+    curseStatus.textContent = "Curse pressure: fading";
+    fightCurseBtn.textContent = "Curse Pushed Back";
+    fightCurseBtn.disabled = true;
+    return;
+  }
+
+  if (state.introCursePushes === 2) {
+    introScene.classList.add("curse-stage-2");
+    curseStatus.textContent = "Curse pressure: weakening";
+  } else if (state.introCursePushes === 1) {
+    introScene.classList.add("curse-stage-1");
+    curseStatus.textContent = "Curse pressure: unstable";
+  } else {
+    curseStatus.textContent = "Curse pressure: high";
+  }
+
+  fightCurseBtn.textContent = "Push Back the Curse";
+  fightCurseBtn.disabled = false;
+}
+
+function handleIntroSceneMove(event) {
+  if (!introScene || !witchArt) return;
+
+  const rect = introScene.getBoundingClientRect();
+  const px = (event.clientX - rect.left) / rect.width - 0.5;
+  const py = (event.clientY - rect.top) / rect.height - 0.5;
+
+  introScene.style.transform = `translate(${px * -4}px, ${py * -2}px)`;
+  witchArt.style.transform = `translate(${px * 7}px, ${py * 5}px)`;
+}
+
+function resetIntroSceneMotion() {
+  if (!introScene || !witchArt) return;
+  introScene.style.transform = "translate(0, 0)";
+  witchArt.style.transform = "translate(0, 0)";
+}
+
+function bindIntroInteractivity() {
+  if (!introScene || introParallaxBound) return;
+  introScene.addEventListener("pointermove", handleIntroSceneMove);
+  introScene.addEventListener("pointerleave", resetIntroSceneMotion);
+  introParallaxBound = true;
+}
+
+function revealIntroActionsWithDelay() {
+  if (!introActions) return;
+  if (introStartRevealTimer) clearTimeout(introStartRevealTimer);
+
+  resetIntroActions();
+  introStartRevealTimer = setTimeout(() => {
+    introActions.classList.remove("hidden");
+    introActions.classList.add("reveal");
+  }, 2600);
+}
+
 function show(id) {
+  if (!state.hasStarted && id !== "intro") {
+    id = "intro";
+  }
+
   if (id === "game" && state.currentChapterIndex === 0 && !state.introSeen) {
     show("intro");
     return;
@@ -156,6 +262,18 @@ function show(id) {
   navBtns.forEach((btn) => btn.classList.remove("active"));
   const activeBtn = document.querySelector(`.nav button[data-go="${id}"]`);
   if (activeBtn) activeBtn.classList.add("active");
+
+  if (id === "intro") {
+    bindIntroInteractivity();
+    runIntroTypewriter();
+    updateIntroCurseUI();
+    revealIntroActionsWithDelay();
+  } else if (introStartRevealTimer) {
+    clearTimeout(introStartRevealTimer);
+    introStartRevealTimer = null;
+    stopIntroTypewriter();
+    if (introCallout) introCallout.textContent = introCalloutFullText;
+  }
 
   if (id === "map") renderMap();
   if (id === "game") {
@@ -305,9 +423,9 @@ function renderMap() {
     .join("");
 
   if (state.completedChapters >= chapters.length) {
-    mapHint.textContent = "All chapters complete. You reached the happy ending!";
+    mapHint.textContent = "All chapters complete! Mission complete: more families now have access to clean water!";
   } else {
-    mapHint.textContent = `Only Chapter ${state.currentChapterIndex + 1} is unlocked. Finish it to unlock the next chapter.`;
+    mapHint.textContent = `Only Chapter ${state.currentChapterIndex + 1} is unlocked! Finish it to unlock the next chapter!`;
   }
 }
 
@@ -374,7 +492,7 @@ function advanceAfterLevelWin() {
     state.currentLevelIndex += 1;
     openStory(
       "✅ Level complete!",
-      `Great work. You cleared level ${levelNumber}/${chapter.levels.length} in Chapter ${chapter.id}.`,
+      `Great work! You cleared level ${levelNumber}/${chapter.levels.length} in Chapter ${chapter.id}, helping push the clean water mission forward!`,
       "next-level",
       "Next Level"
     );
@@ -393,7 +511,7 @@ function advanceAfterLevelWin() {
     } else {
       openStory(
         "🏁 Happy Ending",
-        "Grey arrives home to hugs, laughter, and relief. You finished Chapter 4, and the clean water projects you helped fund keep changing lives long after the journey ends.",
+        "Grey arrives home to hugs, laughter, and relief! But the bigger win is this: your journey helped fund charity: water's goal to bring clean, safe water to every person, so more communities can thrive for years to come!",
         "happy-ending",
         "See Journey Map"
       );
@@ -415,7 +533,7 @@ function loseLevel() {
   shakeOops();
   openStory(
     "💧 Level failed",
-    `You ran out of tries on this level in Chapter ${chapter.id}. Take a breath and try again.`,
+    `You ran out of tries on this level in Chapter ${chapter.id}! Take a breath and try again!`,
     "retry-level",
     "Try Again"
   );
@@ -504,10 +622,28 @@ function handlePhysicalKeyboard(event) {
 }
 
 function completeIntroAndStartChapter1() {
+  if (state.hasStarted) return;
+  state.hasStarted = true;
   state.introSeen = true;
   state.currentChapterIndex = 0;
   state.currentLevelIndex = 0;
+  document.body.classList.remove("prestart");
   beginCurrentLevel();
+}
+
+function handleIntroSceneStartKeydown(event) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  completeIntroAndStartChapter1();
+}
+
+function pushBackCurse() {
+  if (state.introCursePushes >= 3) return;
+  state.introCursePushes += 1;
+  updateIntroCurseUI();
+  moodText.textContent = state.introCursePushes >= 3
+    ? "Mood: hopeful, the curse is breaking 🌤️"
+    : "Mood: resisting the drought witch ⚔️";
 }
 
 function bindIfExists(element, eventName, handler) {
@@ -518,7 +654,10 @@ function bindIfExists(element, eventName, handler) {
 navBtns.forEach((btn) => bindIfExists(btn, "click", () => show(btn.dataset.go)));
 bindIfExists(document.getElementById("startBtn"), "click", () => show("map"));
 bindIfExists(introStartBtn, "click", completeIntroAndStartChapter1);
+bindIfExists(introScene, "click", completeIntroAndStartChapter1);
+bindIfExists(introScene, "keydown", handleIntroSceneStartKeydown);
 bindIfExists(introSkipBtn, "click", () => show("map"));
+bindIfExists(fightCurseBtn, "click", pushBackCurse);
 bindIfExists(mapChapters, "click", handleMapChapterClick);
 bindIfExists(keyGrid, "click", handleKeyClick);
 bindIfExists(hintBtn, "click", useHint);

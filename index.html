@@ -6,7 +6,7 @@
   <title>Clean Water Journey</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="prestart">
   <div class="app">
     <div class="topbar">
       <div>
@@ -37,18 +37,27 @@
       <div class="bd">
         <!-- INTRO -->
         <div class="screen active" id="intro">
-          <p style="margin:0; font-weight:900; font-size:18px;">Chapter 1 - The Decision</p>
+          <p style="margin:0; font-weight:900; font-size:18px;">Clean Water Journey</p>
           <p class="muted" style="margin:8px 0 0; line-height:1.5;">
-            Grey has one shot to reunite with loved ones. The journey starts with hope, community, and your help.
+            Grey is our guide, and the drought witch has cursed the land! Wells are dry, crops are failing, and hope is fading!
           </p>
 
-          <img class="introArt" src="imgs/intro 3.png" alt="Chapter 1 introduction art" />
+          <div class="introScene" id="introSceneStart" role="button" tabindex="0" aria-label="Grey facing the drought witch in a dry wasteland. Tap to start." title="Tap to start">
+            <img class="introArt" src="imgs/intro 3.png" alt="Grey standing in a drought-stricken land" />
+            <img class="witchArt" src="imgs/intro 2.png" alt="The drought witch watching from afar" />
+            <div class="sceneBadge">Dry well • Cracked earth • No rain</div>
+          </div>
 
-          <p class="muted" style="margin:8px 0 0; line-height:1.5;">
-            Raise enough support for clean water projects, and every solved word moves the story forward.
+          <p class="muted" id="introCallout" style="margin:10px 0 0; line-height:1.5;">
+            Oh no, please help us save our land from the evil drought witch! Every solved word raises support for clean water and brings life back!
           </p>
 
-          <div class="btnRow">
+          <div class="introHud" aria-live="polite">
+            <span id="curseStatus">Curse pressure: high</span>
+            <button class="btn" id="fightCurseBtn" type="button">Push Back the Curse</button>
+          </div>
+
+          <div class="btnRow introActions hidden" id="introActions">
             <button class="btn primary" id="introStartBtn" type="button">Start Chapter 1</button>
             <button class="btn" id="introSkipBtn" type="button">Go to Map</button>
           </div>
@@ -56,23 +65,23 @@
 
         <!-- HOME -->
         <div class="screen" id="home">
-          <p style="margin:0; font-weight:800; font-size:18px;">Solve words. Build impact. Get closer.</p>
+          <p style="margin:0; font-weight:800; font-size:18px;">Solve words! Build impact! Get closer!</p>
           <p class="muted" style="margin:8px 0 0; line-height:1.5;">
-            Each solved word unlocks a story moment and adds funds toward your reunion.
+            Each solved word unlocks a story moment and adds funds toward your reunion!
           </p>
           <div class="btnRow">
             <button class="btn primary" id="startBtn" type="button">Start Journey</button>
             <button class="btn" type="button" onclick="show('map')">How to Play</button>
           </div>
           <p class="muted" style="margin-top:12px; font-size:11px;">
-            Inspired by charity: water’s mission of clean water access for all.
+            Inspired by charity: water’s mission of clean water access for all!
           </p>
         </div>
 
         <!-- MAP -->
         <div class="screen" id="map">
           <p style="margin:0; font-weight:800;">Journey Map</p>
-          <p class="muted" id="mapHint" style="margin:6px 0 10px; font-size:12px;">Complete chapters in order to unlock the next one.</p>
+          <p class="muted" id="mapHint" style="margin:6px 0 10px; font-size:12px;">Complete chapters in order to unlock the next one!</p>
           <div id="mapChapters"></div>
         </div>
 
@@ -89,7 +98,7 @@
             <span>_</span>
           </div>
 
-          <p class="muted" id="clueText" style="margin:10px 0 0; font-size:12px;">Clue: A six-letter word linked to clean water.</p>
+          <p class="muted" id="clueText" style="margin:10px 0 0; font-size:12px;">Clue: A six-letter word linked to clean water!</p>
           <p class="muted" id="wrongLetters" style="margin:6px 0 0; font-size:12px;">Wrong letters: none</p>
 
           <div class="kbd" id="keyGrid" aria-label="Keyboard"></div>
@@ -104,7 +113,7 @@
         <div class="screen" id="story">
           <p id="storyTitle" style="margin:0; font-weight:900; font-size:16px;">✅ Word solved!</p>
           <p class="muted" id="storyBody" style="margin:8px 0 0; line-height:1.5;">
-            Your fundraiser post gets shared. Donations start coming in — you’re closer to the flight.
+            Your fundraiser post gets shared! Donations start coming in - you’re closer to the flight!
           </p>
           <div class="btnRow">
             <button class="btn primary" id="nextWordBtn" type="button">Next Word</button>

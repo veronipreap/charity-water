@@ -22,6 +22,14 @@ body{
 	min-height:100vh;
 }
 
+body.prestart #fundsChip,
+body.prestart #progressBar,
+body.prestart .charBanner,
+body.prestart .nav,
+body.prestart #introSkipBtn{
+	display:none !important;
+}
+
 /* Mobile shell */
 .app{
 	max-width: 430px;
@@ -140,6 +148,151 @@ body{
 	border-radius:14px;
 	border:1px solid var(--stroke);
 	box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+
+.introScene{
+	position:relative;
+	margin-top:12px;
+	padding:10px;
+	border-radius:16px;
+	border:1px solid rgba(138,97,56,.26);
+	background:
+		radial-gradient(130px 90px at 84% 18%, rgba(104,42,27,.28), transparent 70%),
+		linear-gradient(180deg, rgba(224,190,148,.28), rgba(188,146,94,.2));
+	overflow:hidden;
+	cursor:pointer;
+	transition: background .28s ease, transform .22s ease;
+}
+
+.introScene:focus-visible{
+	outline:3px solid rgba(30,136,217,.55);
+	outline-offset:2px;
+}
+.introScene::after{
+	content:"";
+	position:absolute;
+	inset:0;
+	background-image: linear-gradient(115deg, transparent 0 48%, rgba(152,114,74,.2) 48% 50%, transparent 50% 100%);
+	opacity:.35;
+	pointer-events:none;
+}
+.introScene .introArt{
+	margin-top:0;
+	border-color: rgba(138,97,56,.28);
+	filter: saturate(.9) contrast(1.04);
+	transition: transform .2s ease;
+}
+
+.witchArt{
+	position:absolute;
+	right:16px;
+	top:18px;
+	width:90px;
+	aspect-ratio: 1 / 1;
+	object-fit:cover;
+	border-radius:14px;
+	border:2px solid rgba(104,42,27,.5);
+	box-shadow: 0 10px 18px rgba(40,16,8,.35);
+	opacity:.92;
+	transition: transform .2s ease, filter .2s ease;
+	animation: witchFloat 2.4s ease-in-out infinite;
+}
+
+.sceneBadge{
+	position:absolute;
+	left:14px;
+	bottom:16px;
+	padding:6px 10px;
+	border-radius:999px;
+	border:1px solid rgba(138,97,56,.4);
+	background: rgba(255,248,236,.85);
+	font-size:11px;
+	font-weight:700;
+	letter-spacing:.2px;
+	color:rgba(95,60,31,.95);
+	box-shadow: 0 4px 10px rgba(85,58,34,.2);
+}
+
+.introHud{
+	margin-top:10px;
+	display:flex;
+	align-items:center;
+	gap:10px;
+	justify-content:space-between;
+	padding:10px 11px;
+	border:1px solid rgba(138,97,56,.28);
+	border-radius:14px;
+	background: rgba(255,248,236,.68);
+}
+
+.introHud span{
+	font-size:12px;
+	font-weight:700;
+	color: rgba(95,60,31,.95);
+}
+
+#fightCurseBtn{
+	min-width: 165px;
+	padding:10px 11px;
+	font-size:12px;
+	background: linear-gradient(135deg, rgba(255,229,182,.92), rgba(241,194,132,.8));
+	border-color: rgba(138,97,56,.35);
+	font-weight:700;
+}
+
+#fightCurseBtn:disabled{
+	background: rgba(255,255,255,.76);
+	color: rgba(26,35,50,.55);
+	border-color: rgba(26,35,50,.18);
+}
+
+.introScene.curse-stage-1{
+	background:
+		radial-gradient(130px 90px at 84% 18%, rgba(90,40,26,.2), transparent 70%),
+		linear-gradient(180deg, rgba(234,205,166,.3), rgba(201,163,113,.2));
+}
+
+.introScene.curse-stage-2{
+	background:
+		radial-gradient(130px 90px at 84% 18%, rgba(70,31,20,.14), transparent 70%),
+		linear-gradient(180deg, rgba(244,221,188,.34), rgba(219,188,145,.24));
+}
+
+.introScene.curse-stage-3{
+	background:
+		radial-gradient(130px 90px at 84% 18%, rgba(59,27,18,.1), transparent 70%),
+		linear-gradient(180deg, rgba(248,229,201,.4), rgba(230,199,160,.28));
+}
+
+.introScene.curse-stage-3 .witchArt{
+	filter: grayscale(.25) brightness(.86);
+	transform: translateY(-2px) scale(.95);
+}
+
+@keyframes witchFloat{
+	0%, 100%{ transform: translateY(0); }
+	50%{ transform: translateY(-4px); }
+}
+
+.introActions{
+	opacity:1;
+	transform: translateY(0);
+	transition: opacity .35s ease, transform .35s ease;
+}
+
+.introActions.hidden{
+	opacity:0;
+	transform: translateY(8px);
+	pointer-events:none;
+}
+
+.introActions.reveal{
+	animation: introReveal .45s ease-out;
+}
+
+@keyframes introReveal{
+	0%{ opacity:0; transform: translateY(10px) scale(.98); }
+	100%{ opacity:1; transform: translateY(0) scale(1); }
 }
 
 /* Game bits */
