@@ -35,11 +35,14 @@ const mapHint = document.getElementById("mapHint");
 const howToBtn = document.getElementById("howToBtn");
 const howToCard = document.getElementById("howToCard");
 const musicToggleBtn = document.getElementById("musicToggleBtn");
+const introTransitionOverlay = document.getElementById("introTransitionOverlay");
 
 let confettiLayer = null;
 let introStartRevealTimer = null;
 let introTypeTimer = null;
 let introParallaxBound = false;
+let introTransitionTimer = null;
+let introGameplayStartTimer = null;
 let musicFadeTimer = null;
 let musicEnabled = false;
 let wantsMusicOn = false;
@@ -50,6 +53,22 @@ ambientMusic.preload = "auto";
 ambientMusic.muted = false;
 ambientMusic.volume = 0;
 const musicTargetVolume = 0.35;
+
+const sfx = {
+  click: new Audio("Music/buttonsound.mp3"),
+  levelWin: new Audio("Music/nextlevel.mp3"),
+  nextChapter: new Audio("Music/nextchapter.mp3"),
+  gameOver: new Audio("Music/gameover.mp3"),
+  magicSpell: new Audio("Music/magicspell.mp3"),
+  cursePush: new Audio("Music/splash.mp3")
+};
+
+sfx.click.volume = 0.45;
+sfx.levelWin.volume = 0.6;
+sfx.nextChapter.volume = 0.65;
+sfx.gameOver.volume = 0.7;
+sfx.magicSpell.volume = 0.7;
+sfx.cursePush.volume = 0.7;
 
 const chapters = [
   {
@@ -123,6 +142,8 @@ const state = {
   funds: 420,
   goal: 1200,
   waterPct: 62,
+  moodPct: 35,
+  moodGameOver: false,
   currentChapterIndex: 0,
   currentLevelIndex: 0,
   completedChapters: 0,
@@ -137,6 +158,23 @@ const state = {
 };
 
 const introCalloutFullText = "Oh no, please help us save our land from the evil drought witch! Every solved word raises support for clean water and brings life back!";
+
+function playSfx(sound, restartFromBeginning = false) {
+  if (!sound) return;
+  if (restartFromBeginning) sound.currentTime = 0;
+
+  sound.play().catch(() => {
+    // Ignore rejected play promises (browser gesture/audio policies).
+  });
+}
+
+function handleGlobalClickSound(event) {
+  const target = event.target.closest("button, a, [role='button']");
+  if (!target) return;
+  if (target.disabled || target.getAttribute("aria-disabled") === "true") return;
+  if (target.id === "fightCurseBtn") return;
+  playSfx(sfx.click, true);
+}
 
 function getCurrentChapter() {
   return chapters[state.currentChapterIndex];
@@ -157,15 +195,29 @@ function setExpression(expression) {
   avatar.innerHTML = `<img src="imgs/icon.png" alt="Grey" style="width:100%; height:100%; object-fit:cover; object-position:center 15%; border-radius:16px; transform:${pose[expression] || pose.neutral}; transition:transform .2s ease;">`;
 }
 
-function setMoodForScreen(screenId) {
-  const moods = {
-    intro: "Mood: determined to stop the drought witch ⚔️",
-    home: "Mood: calm and confident 😌",
-    map: "Mood: planning the route 🗺️",
-    game: "Mood: locked in 🎯",
-    story: "Mood: celebrating wins ✨"
-  };
-  moodText.textContent = moods[screenId] || "Mood: cheering you on ✨";
+function clampMood(value) {
+  return Math.max(0, Math.min(100, value));
+}
+
+function getMoodLabel() {
+  if (state.moodGameOver) return "Mood: knocked down - game over";
+  if (state.moodPct >= 80) return "Mood: unstoppable";
+  if (state.moodPct >= 60) return "Mood: confident";
+  if (state.moodPct >= 40) return "Mood: steady";
+  if (state.moodPct >= 20) return "Mood: worried";
+  return "Mood: drained";
+}
+
+function updateMoodUI() {
+  moodText.textContent = getMoodLabel();
+  progressFill.style.width = `${state.moodPct}%`;
+  progressBar.classList.toggle("danger", state.moodGameOver);
+}
+
+function adjustMood(delta, options = {}) {
+  state.moodPct = clampMood(state.moodPct + delta);
+  state.moodGameOver = Boolean(options.gameOver);
+  updateMoodUI();
 }
 
 function resetIntroActions() {
@@ -270,7 +322,7 @@ function show(id) {
   screens.forEach((screenId) => document.getElementById(screenId).classList.remove("active"));
   document.getElementById(id).classList.add("active");
   titleEl.textContent = id[0].toUpperCase() + id.slice(1);
-  setMoodForScreen(id);
+  updateMoodUI();
 
   if (howToCard && id !== "home") {
     howToCard.classList.add("hidden");
@@ -293,6 +345,14 @@ function show(id) {
   }
 
   if (id === "map") renderMap();
+  if (id === "story" && state.storyMode === "map") {
+    storyTitle.textContent = "Story Journal";
+    storyBody.textContent = "Story moments appear here after you complete a level or chapter.";
+    nextWordBtn.textContent = "Go to Map";
+    if (storyMapBtn) storyMapBtn.style.display = "none";
+  } else if (id === "story") {
+    if (storyMapBtn) storyMapBtn.style.display = "";
+  }
   if (id === "game") {
     state.canPlay = true;
     renderGame();
@@ -344,8 +404,6 @@ function launchConfetti() {
 }
 
 function updateFunds() {
-  const pct = Math.round((state.funds / state.goal) * 100);
-  progressFill.style.width = `${Math.min(100, pct)}%`;
   fundsChip.textContent = `$${state.funds} / $${state.goal}`;
 }
 
@@ -499,11 +557,12 @@ function advanceAfterLevelWin() {
   state.waterPct = Math.min(90, state.waterPct + 6);
   launchConfetti();
   setExpression("win");
-  moodText.textContent = "Mood: proud of you ✨";
+  adjustMood(10, { gameOver: false });
   pulseWin();
 
   const levelNumber = state.currentLevelIndex + 1;
   const isChapterComplete = levelNumber >= chapter.levels.length;
+  playSfx(sfx.levelWin, true);
 
   if (!isChapterComplete) {
     state.currentLevelIndex += 1;
@@ -544,9 +603,10 @@ function loseLevel() {
   const chapter = getCurrentChapter();
   if (!chapter) return;
 
+  playSfx(sfx.gameOver, true);
   state.waterPct = Math.max(10, state.waterPct - 10);
   setExpression("lose");
-  moodText.textContent = "Mood: reset and try again 😤";
+  adjustMood(-22, { gameOver: true });
   shakeOops();
   openStory(
     "💧 Level failed",
@@ -603,6 +663,7 @@ function handleStoryNext() {
     return;
   }
   if (state.storyMode === "next-chapter") {
+    playSfx(sfx.nextChapter, true);
     startCurrentChapter();
     return;
   }
@@ -640,12 +701,31 @@ function handlePhysicalKeyboard(event) {
 
 function completeIntroAndStartChapter1() {
   if (state.hasStarted) return;
+  playSfx(sfx.magicSpell, true);
   state.hasStarted = true;
   state.introSeen = true;
   state.currentChapterIndex = 0;
   state.currentLevelIndex = 0;
-  document.body.classList.remove("prestart");
-  beginCurrentLevel();
+  if (!introTransitionOverlay) {
+    document.body.classList.remove("prestart");
+    beginCurrentLevel();
+    return;
+  }
+
+  introTransitionOverlay.classList.remove("active");
+  void introTransitionOverlay.offsetWidth;
+  introTransitionOverlay.classList.add("active");
+
+  if (introGameplayStartTimer) clearTimeout(introGameplayStartTimer);
+  introGameplayStartTimer = setTimeout(() => {
+    document.body.classList.remove("prestart");
+    beginCurrentLevel();
+  }, 260);
+
+  if (introTransitionTimer) clearTimeout(introTransitionTimer);
+  introTransitionTimer = setTimeout(() => {
+    introTransitionOverlay.classList.remove("active");
+  }, 2000);
 }
 
 function handleIntroSceneStartKeydown(event) {
@@ -656,11 +736,10 @@ function handleIntroSceneStartKeydown(event) {
 
 function pushBackCurse() {
   if (state.introCursePushes >= 3) return;
+  playSfx(sfx.cursePush, true);
   state.introCursePushes += 1;
   updateIntroCurseUI();
-  moodText.textContent = state.introCursePushes >= 3
-    ? "Mood: hopeful, the curse is breaking 🌤️"
-    : "Mood: resisting the drought witch ⚔️";
+  adjustMood(3, { gameOver: false });
 }
 
 function openHowToPlay() {
@@ -774,10 +853,12 @@ bindIfExists(nextWordBtn, "click", handleStoryNext);
 bindIfExists(storyMapBtn, "click", () => show("map"));
 bindIfExists(musicToggleBtn, "click", toggleBackgroundMusic);
 document.addEventListener("keydown", handlePhysicalKeyboard);
+document.addEventListener("click", handleGlobalClickSound);
 
 window.show = show;
 
 setExpression("neutral");
+updateMoodUI();
 updateMusicToggle();
 show("intro");
 renderMap();

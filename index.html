@@ -16,6 +16,7 @@
       <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
         <button class="audioToggle" id="musicToggleBtn" type="button" aria-pressed="false">Music: Off</button>
         <div class="chip" id="fundsChip">$420 / $1200</div>
+        <a class="topCharityLink" href="https://www.charitywater.org/" target="_blank" rel="noopener noreferrer">Inspired by charity: water's mission.</a>
       </div>
     </div>
 
@@ -34,7 +35,6 @@
 
       <div class="hd">
         <b id="screenTitle">Intro</b>
-        <a class="muted" style="font-size:12px;" href="https://www.charitywater.org/" target="_blank" rel="noopener noreferrer">Inspired by charity: water's mission</a>
       </div>
 
       <div class="bd">
@@ -89,7 +89,7 @@
             </ol>
           </div>
           <p class="muted" style="margin-top:12px; font-size:11px;">
-            Inspired by charity: water’s mission of clean water access for all!
+            Inspired by charity: water's mission: <a href="https://www.charitywater.org/" target="_blank" rel="noopener noreferrer">https://www.charitywater.org/</a>. Their work matters because clean water helps protect health, keeps kids in school, and supports stronger communities.
           </p>
         </div>
 
@@ -145,6 +145,8 @@
     <button data-go="game">Play</button>
     <button data-go="story">Story</button>
   </nav>
+
+  <div id="introTransitionOverlay" aria-hidden="true"></div>
 
   <script src="script.js"></script>
 </body>
