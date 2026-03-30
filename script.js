@@ -36,6 +36,8 @@ const howToBtn = document.getElementById("howToBtn");
 const howToCard = document.getElementById("howToCard");
 const musicToggleBtn = document.getElementById("musicToggleBtn");
 const introTransitionOverlay = document.getElementById("introTransitionOverlay");
+const difficultyBtns = document.querySelectorAll(".difficultyBtn");
+const difficultyModeText = document.getElementById("difficultyModeText");
 
 let confettiLayer = null;
 let introStartRevealTimer = null;
@@ -59,6 +61,7 @@ const sfx = {
   levelWin: new Audio("Music/nextlevel.mp3"),
   nextChapter: new Audio("Music/nextchapter.mp3"),
   gameOver: new Audio("Music/gameover.mp3"),
+  gameOverKid: new Audio("Music/gameoverkid.mp3"),
   magicSpell: new Audio("Music/magicspell.mp3"),
   cursePush: new Audio("Music/splash.mp3")
 };
@@ -67,6 +70,7 @@ sfx.click.volume = 0.45;
 sfx.levelWin.volume = 0.6;
 sfx.nextChapter.volume = 0.65;
 sfx.gameOver.volume = 0.7;
+sfx.gameOverKid.volume = 0.68;
 sfx.magicSpell.volume = 0.7;
 sfx.cursePush.volume = 0.7;
 
@@ -76,7 +80,7 @@ const chapters = [
     title: "The Decision",
     subtitle: "Start with hope",
     hintsPerLevel: 4,
-    maxMistakes: 8,
+    maxMistakes: 5,
     starterLetters: 2,
     levels: [
       { answer: "HOPE", clue: "Clue: Belief that good things can happen.", reward: 40 },
@@ -89,7 +93,7 @@ const chapters = [
     title: "Fundraising",
     subtitle: "First support wave",
     hintsPerLevel: 3,
-    maxMistakes: 7,
+    maxMistakes: 5,
     starterLetters: 1,
     levels: [
       { answer: "WATER", clue: "Clue: We are raising money for clean _____.", reward: 55 },
@@ -103,7 +107,7 @@ const chapters = [
     title: "Community",
     subtitle: "More people join",
     hintsPerLevel: 2,
-    maxMistakes: 6,
+    maxMistakes: 5,
     starterLetters: 1,
     levels: [
       { answer: "FILTER", clue: "Clue: Tool used to clean water.", reward: 70 },
@@ -118,7 +122,7 @@ const chapters = [
     title: "Momentum",
     subtitle: "The mission grows",
     hintsPerLevel: 1,
-    maxMistakes: 6,
+    maxMistakes: 5,
     starterLetters: 1,
     levels: [
       { answer: "CHARITY", clue: "Clue: Helping others through giving.", reward: 90 },
@@ -144,6 +148,7 @@ const state = {
   waterPct: 62,
   moodPct: 35,
   moodGameOver: false,
+  difficulty: "normal",
   currentChapterIndex: 0,
   currentLevelIndex: 0,
   completedChapters: 0,
@@ -159,6 +164,25 @@ const state = {
 
 const introCalloutFullText = "Oh no, please help us save our land from the evil drought witch! Every solved word raises support for clean water and brings life back!";
 
+const difficultyMeta = {
+  easy: "Easy: 3 chapters with hints enabled except the final chapter.",
+  normal: "Normal: 4 chapters with standard hint rules.",
+  hard: "Hard: 4 chapters with no hints in any chapter."
+};
+
+function getActiveChapters() {
+  return state.difficulty === "easy" ? chapters.slice(0, 3) : chapters;
+}
+
+function hasHintsForChapter(chapter) {
+  if (!chapter) return false;
+  if (state.difficulty === "hard") return false;
+
+  const activeChapters = getActiveChapters();
+  const isFinalChapter = state.currentChapterIndex === activeChapters.length - 1;
+  return !isFinalChapter;
+}
+
 function playSfx(sound, restartFromBeginning = false) {
   if (!sound) return;
   if (restartFromBeginning) sound.currentTime = 0;
@@ -166,6 +190,28 @@ function playSfx(sound, restartFromBeginning = false) {
   sound.play().catch(() => {
     // Ignore rejected play promises (browser gesture/audio policies).
   });
+}
+
+function playGameOverSequence() {
+  let playedSecond = false;
+
+  const playSecond = () => {
+    if (playedSecond) return;
+    playedSecond = true;
+    playSfx(sfx.gameOverKid, true);
+  };
+
+  const onEnded = () => {
+    playSecond();
+  };
+
+  sfx.gameOver.removeEventListener("ended", onEnded);
+  sfx.gameOver.addEventListener("ended", onEnded, { once: true });
+  playSfx(sfx.gameOver, true);
+
+  if (!Number.isFinite(sfx.gameOver.duration) || sfx.gameOver.duration <= 0) {
+    setTimeout(playSecond, 1700);
+  }
 }
 
 function handleGlobalClickSound(event) {
@@ -177,7 +223,8 @@ function handleGlobalClickSound(event) {
 }
 
 function getCurrentChapter() {
-  return chapters[state.currentChapterIndex];
+  const activeChapters = getActiveChapters();
+  return activeChapters[state.currentChapterIndex] || null;
 }
 
 function getCurrentLevel() {
@@ -193,6 +240,11 @@ function setExpression(expression) {
     lose: "translateY(1px) scale(.98)"
   };
   avatar.innerHTML = `<img src="imgs/icon.png" alt="Grey" style="width:100%; height:100%; object-fit:cover; object-position:center 15%; border-radius:16px; transform:${pose[expression] || pose.neutral}; transition:transform .2s ease;">`;
+}
+
+function updateInteractionLock() {
+  const shouldLock = document.getElementById("story").classList.contains("active") && state.storyMode === "game-over-restart";
+  document.body.classList.toggle("force-restart-lock", shouldLock);
 }
 
 function clampMood(value) {
@@ -212,6 +264,33 @@ function updateMoodUI() {
   moodText.textContent = getMoodLabel();
   progressFill.style.width = `${state.moodPct}%`;
   progressBar.classList.toggle("danger", state.moodGameOver);
+}
+
+function updateDifficultyUI() {
+  difficultyBtns.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.difficulty === state.difficulty);
+  });
+
+  if (difficultyModeText) {
+    difficultyModeText.textContent = difficultyMeta[state.difficulty] || difficultyMeta.normal;
+  }
+}
+
+function setDifficulty(mode) {
+  if (!difficultyMeta[mode]) return;
+
+  state.difficulty = mode;
+  state.currentChapterIndex = 0;
+  state.currentLevelIndex = 0;
+  state.completedChapters = 0;
+  state.mistakes = 0;
+  state.hintsLeft = 0;
+  state.guessed = new Set();
+  state.storyMode = "map";
+  state.canPlay = false;
+
+  updateDifficultyUI();
+  renderMap();
 }
 
 function adjustMood(delta, options = {}) {
@@ -350,6 +429,8 @@ function show(id) {
     storyBody.textContent = "Story moments appear here after you complete a level or chapter.";
     nextWordBtn.textContent = "Go to Map";
     if (storyMapBtn) storyMapBtn.style.display = "none";
+  } else if (id === "story" && state.storyMode === "game-over-restart") {
+    if (storyMapBtn) storyMapBtn.style.display = "none";
   } else if (id === "story") {
     if (storyMapBtn) storyMapBtn.style.display = "";
   }
@@ -357,6 +438,8 @@ function show(id) {
     state.canPlay = true;
     renderGame();
   }
+
+  updateInteractionLock();
 }
 
 function pulseWin() {
@@ -450,9 +533,9 @@ function renderStats() {
   if (!chapter || !level) return;
 
   gameTitle.textContent = `Chapter ${chapter.id} - ${chapter.title} • Level ${state.currentLevelIndex + 1}/${chapter.levels.length}`;
-  if (chapter.id === chapters.length) {
+  if (!hasHintsForChapter(chapter)) {
     gameStats.textContent = `Mistakes: ${state.mistakes}/${chapter.maxMistakes} • Hints: none`;
-    hintBtn.textContent = "No Hints (Final Chapter)";
+    hintBtn.textContent = state.difficulty === "hard" ? "No Hints (Hard Mode)" : "No Hints (Final Chapter)";
   } else {
     gameStats.textContent = `Mistakes: ${state.mistakes}/${chapter.maxMistakes} • Hints left: ${state.hintsLeft}`;
     hintBtn.textContent = "Use Hint";
@@ -472,14 +555,15 @@ function renderGame() {
 }
 
 function renderMap() {
-  const visibleCount = Math.min(chapters.length, state.currentChapterIndex + 1);
-  const visibleChapters = chapters.slice(0, visibleCount);
+  const activeChapters = getActiveChapters();
+  const visibleCount = Math.min(activeChapters.length, state.currentChapterIndex + 1);
+  const visibleChapters = activeChapters.slice(0, visibleCount);
 
   mapChapters.innerHTML = visibleChapters
     .map((chapter, idx) => {
       const chapterIndex = idx;
       const done = chapterIndex < state.completedChapters;
-      const current = chapterIndex === state.currentChapterIndex && state.completedChapters < chapters.length;
+      const current = chapterIndex === state.currentChapterIndex && state.completedChapters < activeChapters.length;
       const actionText = done ? "Done ✓" : current ? "Play ▶" : "Locked";
       const statusText = done ? "Complete" : current ? "Current" : "Locked";
       return `
@@ -497,7 +581,7 @@ function renderMap() {
     })
     .join("");
 
-  if (state.completedChapters >= chapters.length) {
+  if (state.completedChapters >= activeChapters.length) {
     mapHint.textContent = "All chapters complete! Mission complete: more families now have access to clean water!";
   } else {
     mapHint.textContent = `Only Chapter ${state.currentChapterIndex + 1} is unlocked! Finish it to unlock the next chapter!`;
@@ -534,10 +618,35 @@ function beginCurrentLevel() {
   if (!chapter) return;
 
   state.mistakes = 0;
-  state.hintsLeft = chapter.hintsPerLevel;
+  state.hintsLeft = hasHintsForChapter(chapter) ? chapter.hintsPerLevel : 0;
   revealStarterLetters();
   state.canPlay = true;
   show("game");
+}
+
+function restartRunToIntro() {
+  state.funds = 420;
+  state.waterPct = 62;
+  state.moodPct = 35;
+  state.moodGameOver = false;
+  state.currentChapterIndex = 0;
+  state.currentLevelIndex = 0;
+  state.completedChapters = 0;
+  state.mistakes = 0;
+  state.hintsLeft = 0;
+  state.guessed = new Set();
+  state.hasStarted = false;
+  state.introSeen = false;
+  state.introCursePushes = 0;
+  state.canPlay = false;
+  state.storyMode = "map";
+
+  document.body.classList.remove("force-restart-lock");
+  document.body.classList.add("prestart");
+  updateMoodUI();
+  updateFunds();
+  renderMap();
+  show("intro");
 }
 
 function startCurrentChapter() {
@@ -573,9 +682,10 @@ function advanceAfterLevelWin() {
       "Next Level"
     );
   } else {
+    const activeChapters = getActiveChapters();
     state.completedChapters += 1;
 
-    if (chapter.id < chapters.length) {
+    if (state.currentChapterIndex < activeChapters.length - 1) {
       state.currentChapterIndex += 1;
       state.currentLevelIndex = 0;
       openStory(
@@ -603,16 +713,16 @@ function loseLevel() {
   const chapter = getCurrentChapter();
   if (!chapter) return;
 
-  playSfx(sfx.gameOver, true);
+  playGameOverSequence();
   state.waterPct = Math.max(10, state.waterPct - 10);
   setExpression("lose");
   adjustMood(-22, { gameOver: true });
   shakeOops();
   openStory(
-    "💧 Level failed",
-    `You ran out of tries on this level in Chapter ${chapter.id}! Take a breath and try again!`,
-    "retry-level",
-    "Try Again"
+    "☠️ Game Over",
+    "Grey says: We cannot give up now. The drought witch wins when we stop trying. Learn from this run, focus, and come back stronger.",
+    "game-over-restart",
+    "Restart the journey again"
   );
   setTimeout(() => setExpression("neutral"), 900);
 }
@@ -667,6 +777,10 @@ function handleStoryNext() {
     startCurrentChapter();
     return;
   }
+  if (state.storyMode === "game-over-restart") {
+    restartRunToIntro();
+    return;
+  }
   if (state.storyMode === "retry-level") {
     beginCurrentLevel();
     return;
@@ -682,6 +796,12 @@ function handleMapChapterClick(event) {
   if (Number.isNaN(chapterIndex) || chapterIndex !== state.currentChapterIndex) return;
 
   startCurrentChapter();
+}
+
+function handleDifficultySelect(event) {
+  const btn = event.target.closest("button[data-difficulty]");
+  if (!btn) return;
+  setDifficulty(btn.dataset.difficulty);
 }
 
 function handleKeyClick(event) {
@@ -720,12 +840,12 @@ function completeIntroAndStartChapter1() {
   introGameplayStartTimer = setTimeout(() => {
     document.body.classList.remove("prestart");
     beginCurrentLevel();
-  }, 260);
+  }, 320);
 
   if (introTransitionTimer) clearTimeout(introTransitionTimer);
   introTransitionTimer = setTimeout(() => {
     introTransitionOverlay.classList.remove("active");
-  }, 2000);
+  }, 2600);
 }
 
 function handleIntroSceneStartKeydown(event) {
@@ -852,6 +972,7 @@ bindIfExists(quitBtn, "click", () => show("map"));
 bindIfExists(nextWordBtn, "click", handleStoryNext);
 bindIfExists(storyMapBtn, "click", () => show("map"));
 bindIfExists(musicToggleBtn, "click", toggleBackgroundMusic);
+difficultyBtns.forEach((btn) => bindIfExists(btn, "click", handleDifficultySelect));
 document.addEventListener("keydown", handlePhysicalKeyboard);
 document.addEventListener("click", handleGlobalClickSound);
 
@@ -860,6 +981,7 @@ window.show = show;
 setExpression("neutral");
 updateMoodUI();
 updateMusicToggle();
+updateDifficultyUI();
 show("intro");
 renderMap();
 updateFunds();

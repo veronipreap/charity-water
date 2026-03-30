@@ -290,6 +290,51 @@ body.prestart #introSkipBtn{
 	color: rgba(95,60,31,.95);
 }
 
+.difficultyPicker{
+	margin-top:10px;
+	padding:10px 11px;
+	border:1px solid rgba(26,35,50,.14);
+	border-radius:14px;
+	background: rgba(255,255,255,.74);
+}
+
+.difficultyTitle{
+	margin:0;
+	font-size:12px;
+	font-weight:800;
+	color: rgba(26,35,50,.88);
+}
+
+.difficultyRow{
+	display:grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap:8px;
+	margin-top:8px;
+}
+
+.difficultyBtn{
+	border:1px solid var(--stroke);
+	background: rgba(255,255,255,.9);
+	color: rgba(26,35,50,.9);
+	padding:8px 8px;
+	border-radius: 12px;
+	font-size:12px;
+	font-weight:700;
+	cursor:pointer;
+}
+
+.difficultyBtn.active{
+	background: linear-gradient(135deg, rgba(255,201,29,.92), rgba(30,136,217,.86));
+	border-color: rgba(255,201,29,.66);
+	color:#1a2332;
+}
+
+.difficultyCopy{
+	margin:8px 0 0;
+	font-size:11px;
+	line-height:1.4;
+}
+
 #fightCurseBtn{
 	min-width: 165px;
 	padding:10px 11px;
@@ -547,33 +592,68 @@ body.prestart #introSkipBtn{
 	pointer-events: none;
 	opacity: 0;
 	z-index: 1200;
+	background: transparent;
+	will-change: opacity;
+	transform: translateZ(0);
+}
+
+#introTransitionOverlay::before,
+#introTransitionOverlay::after{
+	content: "";
+	position: absolute;
+	inset: 0;
+	opacity: 0;
+}
+
+#introTransitionOverlay::before{
 	background: #ffffff;
 }
 
-#introTransitionOverlay.active{
-	animation: introWhiteBlueFlash 2s ease-in-out forwards;
+#introTransitionOverlay::after{
+	background: linear-gradient(180deg, #dff1ff 0%, #9ed6ff 52%, #63b7f8 100%);
 }
 
-@keyframes introWhiteBlueFlash{
+#introTransitionOverlay.active::before{
+	animation: introWhiteFlash 2.6s cubic-bezier(.23,.72,.24,1) forwards;
+}
+
+#introTransitionOverlay.active::after{
+	animation: introBlueWash 2.6s cubic-bezier(.23,.72,.24,1) forwards;
+}
+
+@keyframes introWhiteFlash{
 	0%{
 		opacity: 0;
-		background: #ffffff;
 	}
-	12%{
-		opacity: .98;
-		background: #ffffff;
+	10%{
+		opacity: 1;
 	}
-	45%{
-		opacity: .95;
-		background: #cfe8ff;
+	42%{
+		opacity: .86;
 	}
-	78%{
-		opacity: .68;
-		background: #87c8ff;
+	72%{
+		opacity: .18;
 	}
 	100%{
 		opacity: 0;
-		background: #5aaef3;
+	}
+}
+
+@keyframes introBlueWash{
+	0%{
+		opacity: 0;
+	}
+	18%{
+		opacity: .04;
+	}
+	48%{
+		opacity: .55;
+	}
+	78%{
+		opacity: .62;
+	}
+	100%{
+		opacity: 0;
 	}
 }
 
@@ -586,4 +666,29 @@ body.prestart #introSkipBtn{
 		animation: none;
 		opacity: 0;
 	}
+
+	#introTransitionOverlay.active::before,
+	#introTransitionOverlay.active::after{
+		animation: none;
+		opacity: 0;
+	}
+}
+
+body.force-restart-lock button,
+body.force-restart-lock a,
+body.force-restart-lock [role="button"]{
+	pointer-events:none;
+	opacity:.42;
+	filter: grayscale(.35);
+}
+
+body.force-restart-lock #nextWordBtn{
+	pointer-events:auto;
+	opacity:1;
+	filter:none;
+}
+
+body.force-restart-lock .topbar,
+body.force-restart-lock .nav{
+	opacity:.45;
 }

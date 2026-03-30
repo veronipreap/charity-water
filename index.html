@@ -60,6 +60,16 @@
             <button class="btn" id="fightCurseBtn" type="button">Push Back the Curse</button>
           </div>
 
+          <div class="difficultyPicker" aria-label="Difficulty selector">
+            <p class="difficultyTitle">Choose your difficulty</p>
+            <div class="difficultyRow" id="difficultyPicker">
+              <button class="difficultyBtn" data-difficulty="easy" type="button">Easy</button>
+              <button class="difficultyBtn active" data-difficulty="normal" type="button">Normal</button>
+              <button class="difficultyBtn" data-difficulty="hard" type="button">Hard</button>
+            </div>
+            <p class="muted difficultyCopy" id="difficultyModeText">Normal: 4 chapters with standard hint rules.</p>
+          </div>
+
           <div class="btnRow introActions hidden" id="introActions">
             <button class="btn primary" id="introStartBtn" type="button">Start Chapter 1</button>
             <button class="btn" id="introSkipBtn" type="button">Go to Map</button>
