@@ -58,6 +58,14 @@ ambientMusic.muted = false;
 ambientMusic.volume = 0;
 const musicTargetVolume = 0.35;
 
+ambientMusic.addEventListener("ended", () => {
+  if (!wantsMusicOn) return;
+  ambientMusic.currentTime = 0;
+  ambientMusic.play().catch(() => {
+    // Ignore rejected play promises (browser gesture/audio policies).
+  });
+});
+
 const sfx = {
   click: new Audio("Music/buttonsound.mp3"),
   levelWin: new Audio("Music/nextlevel.mp3"),
@@ -952,6 +960,7 @@ function updateMusicToggle() {
 async function startBackgroundMusic() {
   if (!wantsMusicOn) return false;
   try {
+    ambientMusic.loop = true;
     await ambientMusic.play();
     musicEnabled = true;
     fadeMusicTo(musicTargetVolume, 900);
