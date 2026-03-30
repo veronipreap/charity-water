@@ -48,6 +48,8 @@ let introGameplayStartTimer = null;
 let musicFadeTimer = null;
 let musicEnabled = false;
 let wantsMusicOn = false;
+let gameOverSequenceTimer = null;
+let gameOverEndedHandler = null;
 
 const ambientMusic = new Audio("Music/cottagecore.mp3");
 ambientMusic.loop = true;
@@ -62,6 +64,7 @@ const sfx = {
   nextChapter: new Audio("Music/nextchapter.mp3"),
   gameOver: new Audio("Music/gameover.mp3"),
   gameOverKid: new Audio("Music/gameoverkid.mp3"),
+  trumpets: new Audio("Music/trumpets.mp3"),
   magicSpell: new Audio("Music/magicspell.mp3"),
   cursePush: new Audio("Music/splash.mp3")
 };
@@ -71,6 +74,7 @@ sfx.levelWin.volume = 0.6;
 sfx.nextChapter.volume = 0.65;
 sfx.gameOver.volume = 0.7;
 sfx.gameOverKid.volume = 0.68;
+sfx.trumpets.volume = 0.72;
 sfx.magicSpell.volume = 0.7;
 sfx.cursePush.volume = 0.7;
 
@@ -192,7 +196,20 @@ function playSfx(sound, restartFromBeginning = false) {
   });
 }
 
+function cancelPendingGameOverSequence() {
+  if (gameOverSequenceTimer) {
+    clearTimeout(gameOverSequenceTimer);
+    gameOverSequenceTimer = null;
+  }
+
+  if (gameOverEndedHandler) {
+    sfx.gameOver.removeEventListener("ended", gameOverEndedHandler);
+    gameOverEndedHandler = null;
+  }
+}
+
 function playGameOverSequence() {
+  cancelPendingGameOverSequence();
   let playedSecond = false;
 
   const playSecond = () => {
@@ -203,14 +220,18 @@ function playGameOverSequence() {
 
   const onEnded = () => {
     playSecond();
+    gameOverEndedHandler = null;
   };
 
-  sfx.gameOver.removeEventListener("ended", onEnded);
+  gameOverEndedHandler = onEnded;
   sfx.gameOver.addEventListener("ended", onEnded, { once: true });
   playSfx(sfx.gameOver, true);
 
   if (!Number.isFinite(sfx.gameOver.duration) || sfx.gameOver.duration <= 0) {
-    setTimeout(playSecond, 1700);
+    gameOverSequenceTimer = setTimeout(() => {
+      playSecond();
+      gameOverSequenceTimer = null;
+    }, 1700);
   }
 }
 
@@ -243,7 +264,8 @@ function setExpression(expression) {
 }
 
 function updateInteractionLock() {
-  const shouldLock = document.getElementById("story").classList.contains("active") && state.storyMode === "game-over-restart";
+  const shouldLock = document.getElementById("story").classList.contains("active")
+    && (state.storyMode === "game-over-restart" || state.storyMode === "happy-ending-restart");
   document.body.classList.toggle("force-restart-lock", shouldLock);
 }
 
@@ -429,7 +451,7 @@ function show(id) {
     storyBody.textContent = "Story moments appear here after you complete a level or chapter.";
     nextWordBtn.textContent = "Go to Map";
     if (storyMapBtn) storyMapBtn.style.display = "none";
-  } else if (id === "story" && state.storyMode === "game-over-restart") {
+  } else if (id === "story" && (state.storyMode === "game-over-restart" || state.storyMode === "happy-ending-restart")) {
     if (storyMapBtn) storyMapBtn.style.display = "none";
   } else if (id === "story") {
     if (storyMapBtn) storyMapBtn.style.display = "";
@@ -625,6 +647,7 @@ function beginCurrentLevel() {
 }
 
 function restartRunToIntro() {
+  cancelPendingGameOverSequence();
   state.funds = 420;
   state.waterPct = 62;
   state.moodPct = 35;
@@ -654,6 +677,14 @@ function startCurrentChapter() {
     show("intro");
     return;
   }
+
+  const level = getCurrentLevel();
+  const hasActiveProgress = state.canPlay && level && !isCurrentWordSolved();
+  if (hasActiveProgress) {
+    show("game");
+    return;
+  }
+
   beginCurrentLevel();
 }
 
@@ -671,9 +702,9 @@ function advanceAfterLevelWin() {
 
   const levelNumber = state.currentLevelIndex + 1;
   const isChapterComplete = levelNumber >= chapter.levels.length;
-  playSfx(sfx.levelWin, true);
 
   if (!isChapterComplete) {
+    playSfx(sfx.levelWin, true);
     state.currentLevelIndex += 1;
     openStory(
       "✅ Level complete!",
@@ -686,6 +717,7 @@ function advanceAfterLevelWin() {
     state.completedChapters += 1;
 
     if (state.currentChapterIndex < activeChapters.length - 1) {
+      playSfx(sfx.nextChapter, true);
       state.currentChapterIndex += 1;
       state.currentLevelIndex = 0;
       openStory(
@@ -695,11 +727,13 @@ function advanceAfterLevelWin() {
         "Start Next Chapter"
       );
     } else {
+      cancelPendingGameOverSequence();
+      playSfx(sfx.trumpets, true);
       openStory(
         "🏁 Happy Ending",
-        "Grey arrives home to hugs, laughter, and relief! But the bigger win is this: your journey helped fund charity: water's goal to bring clean, safe water to every person, so more communities can thrive for years to come!",
-        "happy-ending",
-        "See Journey Map"
+        "You did it - the drought witch is defeated, the curse is broken, and water begins to flow again. Grey returns home to tears, hugs, and relief as wells refill and families can finally drink safely. This is why charity: water's mission matters so deeply: clean water means fewer children getting sick, fewer mothers walking hours for water, more kids in school, and more time for families to live, work, and dream. Your journey reminds us that every act of compassion can help bring clean, safe water to everyone.",
+        "happy-ending-restart",
+        "Restart the journey again"
       );
     }
   }
@@ -773,11 +807,14 @@ function handleStoryNext() {
     return;
   }
   if (state.storyMode === "next-chapter") {
-    playSfx(sfx.nextChapter, true);
     startCurrentChapter();
     return;
   }
   if (state.storyMode === "game-over-restart") {
+    restartRunToIntro();
+    return;
+  }
+  if (state.storyMode === "happy-ending-restart") {
     restartRunToIntro();
     return;
   }
