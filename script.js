@@ -34,11 +34,22 @@ const mapChapters = document.getElementById("mapChapters");
 const mapHint = document.getElementById("mapHint");
 const howToBtn = document.getElementById("howToBtn");
 const howToCard = document.getElementById("howToCard");
+const musicToggleBtn = document.getElementById("musicToggleBtn");
 
 let confettiLayer = null;
 let introStartRevealTimer = null;
 let introTypeTimer = null;
 let introParallaxBound = false;
+let musicFadeTimer = null;
+let musicEnabled = false;
+let wantsMusicOn = false;
+
+const ambientMusic = new Audio("Music/cottagecore.mp3");
+ambientMusic.loop = true;
+ambientMusic.preload = "auto";
+ambientMusic.muted = false;
+ambientMusic.volume = 0;
+const musicTargetVolume = 0.35;
 
 const chapters = [
   {
@@ -671,6 +682,82 @@ function bindIfExists(element, eventName, handler) {
   element.addEventListener(eventName, handler);
 }
 
+function stopMusicFade() {
+  if (!musicFadeTimer) return;
+  clearInterval(musicFadeTimer);
+  musicFadeTimer = null;
+}
+
+function fadeMusicTo(targetVolume, durationMs = 700) {
+  stopMusicFade();
+
+  const startVolume = ambientMusic.volume;
+  const diff = targetVolume - startVolume;
+  const steps = Math.max(1, Math.floor(durationMs / 50));
+  let step = 0;
+
+  musicFadeTimer = setInterval(() => {
+    step += 1;
+    ambientMusic.volume = Math.min(1, Math.max(0, startVolume + (diff * step) / steps));
+
+    if (step >= steps) {
+      ambientMusic.volume = targetVolume;
+      stopMusicFade();
+    }
+  }, 50);
+}
+
+function updateMusicToggle() {
+  if (!musicToggleBtn) return;
+  musicToggleBtn.textContent = wantsMusicOn ? "Music: On" : "Music: Off";
+  musicToggleBtn.setAttribute("aria-pressed", wantsMusicOn ? "true" : "false");
+}
+
+async function startBackgroundMusic() {
+  if (!wantsMusicOn) return false;
+  try {
+    await ambientMusic.play();
+    musicEnabled = true;
+    fadeMusicTo(musicTargetVolume, 900);
+    updateMusicToggle();
+    return true;
+  } catch (error) {
+    musicEnabled = false;
+    updateMusicToggle();
+    return false;
+  }
+}
+
+function stopBackgroundMusic() {
+  wantsMusicOn = false;
+  musicEnabled = false;
+  fadeMusicTo(0, 260);
+  setTimeout(() => {
+    if (!musicEnabled) ambientMusic.pause();
+  }, 280);
+  updateMusicToggle();
+}
+
+async function toggleBackgroundMusic() {
+  if (wantsMusicOn && musicEnabled) {
+    stopBackgroundMusic();
+    return;
+  }
+
+  if (wantsMusicOn && !musicEnabled) {
+    await startBackgroundMusic();
+    return;
+  }
+
+  wantsMusicOn = true;
+  updateMusicToggle();
+  await startBackgroundMusic();
+}
+
+function attemptMusicAutoplay() {
+  return;
+}
+
 navBtns.forEach((btn) => bindIfExists(btn, "click", () => show(btn.dataset.go)));
 bindIfExists(document.getElementById("startBtn"), "click", () => show("map"));
 bindIfExists(howToBtn, "click", openHowToPlay);
@@ -685,11 +772,13 @@ bindIfExists(hintBtn, "click", useHint);
 bindIfExists(quitBtn, "click", () => show("map"));
 bindIfExists(nextWordBtn, "click", handleStoryNext);
 bindIfExists(storyMapBtn, "click", () => show("map"));
+bindIfExists(musicToggleBtn, "click", toggleBackgroundMusic);
 document.addEventListener("keydown", handlePhysicalKeyboard);
 
 window.show = show;
 
 setExpression("neutral");
+updateMusicToggle();
 show("intro");
 renderMap();
 updateFunds();

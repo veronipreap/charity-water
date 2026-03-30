@@ -20,6 +20,20 @@ body{
 		var(--bg);
 	color:var(--text);
 	min-height:100vh;
+	opacity:0;
+	animation: pageFadeIn .9s ease forwards;
+}
+
+@keyframes pageFadeIn{
+	from{ opacity:0; transform: translateY(8px); }
+	to{ opacity:1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce){
+	body{
+		opacity:1;
+		animation:none;
+	}
 }
 
 body.prestart #fundsChip,
@@ -55,6 +69,30 @@ body.prestart #introSkipBtn{
 	font-size:12px;
 	color:rgba(26,35,50,.85);
 	white-space:nowrap;
+}
+
+.audioToggle{
+	border:1px solid var(--stroke);
+	background: rgba(255,255,255,.9);
+	color: rgba(26,35,50,.9);
+	padding:6px 10px;
+	border-radius:999px;
+	font-size:11px;
+	font-weight:700;
+	letter-spacing:.2px;
+	cursor:pointer;
+	transition: transform .15s ease, box-shadow .18s ease, background .2s ease;
+}
+
+.audioToggle[aria-pressed="true"]{
+	background: linear-gradient(135deg, rgba(255,201,29,.95), rgba(30,136,217,.88));
+	border-color: rgba(255,201,29,.65);
+	color:#1a2332;
+	box-shadow: 0 6px 16px rgba(30,136,217,.22);
+}
+
+.audioToggle:hover{
+	transform: translateY(-1px);
 }
 
 .card{
