@@ -576,6 +576,19 @@ body.prestart #introSkipBtn{
 	75%{ transform: translateX(-4px); }
 }
 
+body.screen-shake .app,
+body.screen-shake .nav{
+	animation: screenShake .28s ease-in-out;
+}
+
+@keyframes screenShake{
+	0%,100%{ transform: translateX(0); }
+	20%{ transform: translateX(-8px); }
+	40%{ transform: translateX(7px); }
+	60%{ transform: translateX(-6px); }
+	80%{ transform: translateX(5px); }
+}
+
 /* Win confetti */
 .confetti-layer{
 	position:fixed;

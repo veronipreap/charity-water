@@ -50,6 +50,7 @@ let musicEnabled = false;
 let wantsMusicOn = false;
 let gameOverSequenceTimer = null;
 let gameOverEndedHandler = null;
+let wrongLetterCutoffTimer = null;
 
 const ambientMusic = new Audio("Music/cottagecore.mp3");
 ambientMusic.loop = true;
@@ -73,6 +74,7 @@ const sfx = {
   gameOver: new Audio("Music/gameover.mp3"),
   gameOverKid: new Audio("Music/gameoverkid.mp3"),
   trumpets: new Audio("Music/trumpets.mp3"),
+  wrongLetter: new Audio("Music/sadblub.mp3"),
   magicSpell: new Audio("Music/magicspell.mp3"),
   cursePush: new Audio("Music/splash.mp3")
 };
@@ -83,6 +85,8 @@ sfx.nextChapter.volume = 0.65;
 sfx.gameOver.volume = 0.7;
 sfx.gameOverKid.volume = 0.68;
 sfx.trumpets.volume = 0.72;
+sfx.wrongLetter.volume = 0.72;
+sfx.wrongLetter.playbackRate = 1.25;
 sfx.magicSpell.volume = 0.7;
 sfx.cursePush.volume = 0.7;
 
@@ -204,6 +208,26 @@ function playSfx(sound, restartFromBeginning = false) {
   });
 }
 
+function playWrongLetterSfx() {
+  if (wrongLetterCutoffTimer) {
+    clearTimeout(wrongLetterCutoffTimer);
+    wrongLetterCutoffTimer = null;
+  }
+
+  playSfx(sfx.wrongLetter, true);
+
+  const hasKnownDuration = Number.isFinite(sfx.wrongLetter.duration) && sfx.wrongLetter.duration > 0.5;
+  const cutoffMs = hasKnownDuration
+    ? Math.max(0, (sfx.wrongLetter.duration - 0.5) * 1000)
+    : 700;
+
+  wrongLetterCutoffTimer = setTimeout(() => {
+    sfx.wrongLetter.pause();
+    sfx.wrongLetter.currentTime = 0;
+    wrongLetterCutoffTimer = null;
+  }, cutoffMs);
+}
+
 function cancelPendingGameOverSequence() {
   if (gameOverSequenceTimer) {
     clearTimeout(gameOverSequenceTimer);
@@ -248,6 +272,7 @@ function handleGlobalClickSound(event) {
   if (!target) return;
   if (target.disabled || target.getAttribute("aria-disabled") === "true") return;
   if (target.id === "fightCurseBtn") return;
+  if (target.dataset.letter) return;
   playSfx(sfx.click, true);
 }
 
@@ -484,6 +509,12 @@ function shakeOops() {
   mainCard.classList.remove("shake");
   void mainCard.offsetWidth;
   mainCard.classList.add("shake");
+}
+
+function shakeScreen() {
+  document.body.classList.remove("screen-shake");
+  void document.body.offsetWidth;
+  document.body.classList.add("screen-shake");
 }
 
 function getConfettiLayer() {
@@ -783,7 +814,9 @@ function applyGuess(rawLetter) {
   if (!level.answer.includes(letter)) {
     state.mistakes += 1;
     state.waterPct = Math.max(10, state.waterPct - 3);
+    playWrongLetterSfx();
     shakeOops();
+    shakeScreen();
   }
 
   if (isCurrentWordSolved()) {
